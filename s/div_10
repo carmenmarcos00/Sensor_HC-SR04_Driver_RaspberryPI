@@ -1,0 +1,18 @@
+.data
+.equ c_div10, 0x19999999
+
+.text
+.globl div_10
+
+div_10:		ldr r1,=c_div10
+		umull r1,r2,r0,r1
+		mov r1,#10
+		umull r1,r3,r2,r1
+		sub r1,r0,r1
+		cmp r1,#10
+		blt fin_div
+		sub r1,r1,#10
+		add r2,r2,#1
+
+fin_div:	mov r0,r2
+		mov pc,lr

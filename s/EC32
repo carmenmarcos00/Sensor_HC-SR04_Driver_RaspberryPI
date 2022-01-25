@@ -1,0 +1,37 @@
+.extern Ini_dist
+.extern Mide_dist
+.extern print_integer
+
+.data
+
+INICIO:   .asciz "Introduzca un 1 para medir o un 0 para salir\n"
+DIST:     .asciz "La distancia es:"
+MM:       .asciz "mm\n"
+FIN:      .asciz "\nFin"
+
+.text
+
+inicia:
+      LDR R0,=INICIO
+      SWI 0x02
+      SWI 0x04
+      CMP R0,#0x31
+      Bne final
+
+      BL Ini_dist         @inicializo el medidor
+      BL Mide_dist        @mido la distancia, devuelve en R0 el valor
+      MOV R9,R0
+      LDR R0,=DIST
+      SWI 0x02
+      MOV R0, R9
+      BL print_integer    @saca por pantalla el valor en decimal
+      LDR R0,=MM
+      SWI 0x02
+      B inicia
+
+
+
+
+final:  LDR R0,=FIN         @dir de la cadena de caracteres
+      SWI 0x02            @saco por pantalla la cadena de caracteres
+      SWI 0x11            @finalizo la ejecucion

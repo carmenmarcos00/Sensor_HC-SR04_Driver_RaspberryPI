@@ -1,0 +1,41 @@
+.data
+                        .align 2
+DIRECCION_BASE:         .word 0x000000	@Es una direccion
+DIRECCION_LOGICA:       .word 0x000000  @Es una direccion
+
+.text
+
+.globl Ini_timer
+.globl Timer_Act
+
+Ini_timer:
+
+    STMDB  SP!,{R4-R7, LR}
+    MOV R0,#13		        @13 (funcion)
+    LDR R1,=0X20003000		@physical base adress System Timer
+    LDR R2,=DIRECCION_BASE
+    STR R1,[R2]
+    MOV R2,#0x100		@Tamano del bloque de la memoria
+    SWI 0x68                    @OS_Memory
+    LDR R0,= DIRECCION_LOGICA   @Cargo la direccion de DIRECCION_LOGICA
+    STR R3,[R0]		       @Almaceno la direccion logica que me ha  retornado
+
+    LDMIA SP!, {R4-R7, PC}
+
+
+Timer_Act:
+
+     STMDB  SP!,{R4-R7, LR}
+
+     LDR R4,=DIRECCION_LOGICA	@Puntero a direccion logica
+     LDR R4,[R4]		@Direccion logica
+     LDR R5,=0x04		@Offset Lower32
+     LDR R6,=0x08		@Offset Higher32
+     SWI 0x16			@entro en modo supervisor
+     LDR R0,[R4,R5]		@valor Lower32
+     LDR R1,[R4,R6]		@valor Higher32
+     SWI 0x7C			@abandono el modo supervisor
+
+     LDMIA SP!, {R4-R7, PC}
+
+

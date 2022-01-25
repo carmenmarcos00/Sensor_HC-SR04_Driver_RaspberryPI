@@ -1,0 +1,53 @@
+.data
+
+.equ ASCII_A_HEX, 48
+
+.extern div_10
+.text
+.globl print_integer
+print_integer:
+
+STMDB SP!, {R4-R7, LR}
+
+MOV R4, R0         @R4 = NUMERO
+
+CMP R4, #0         @Comparo R4 para ver signo
+BGE POS            @B en caso de que sea +
+MOV R0, #45        @Si no signo -
+SWI 0x00           @Saco por pantalla
+
+MOV R1, #-1        @Cambiar signo
+MUL R4, R1, R4     @Saco el numero en positivo
+
+
+POS: MOV R0, R4
+          MOV R5, #0         @contador del número de cifras
+          MOV R7, #10
+
+B WHILE
+
+FOR1: CMP R5, #0       @Hasta que no queden caracteres
+      BLE FIN         @Si no quedan caracteres fin
+      MOV R6, R5       @Posicion de la cifra en la que estoy
+          FOR2: CMP R6, #0
+                BLE FIN2
+                MUL R0, R7, R0 @Multiplico por 10
+                SUB R6, R6, #1 @Una potencia menos
+                B FOR2
+          FIN2:
+      SUB R4, R4, R0   @Numero es igual al numero menos la cifra
+      MOV R0, R4
+      MOV R5, #0       @Inicio la cuenta de caracteres
+      WHILE: CMP R0, #10
+          BLT SIGUE      @Salgo si es menor de 10
+          BL div_10         @Bl a div_10 (dado en la practica)
+          ADD R5, R5, #1    @cont++
+          B WHILE
+      SIGUE:
+      ADD R0, R0, #ASCII_A_HEX   @Convierto el valor decimal a el ascii
+      SWI 0x00                   @Saco por pantalla
+      SUB R0, R0, #ASCII_A_HEX   @Caracter ASCII a entero (para poder sacar por pantalla)
+      B FOR1
+FIN:
+
+LDMIA SP!, {R4-R7, PC}

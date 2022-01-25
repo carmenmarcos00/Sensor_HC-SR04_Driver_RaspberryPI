@@ -1,0 +1,26 @@
+.extern Ini_Timer
+.extern Timer_Act
+
+.data
+.global pruebaTimer
+
+.text
+
+	BL Ini_timer
+	BL Timer_Act
+	MOV R5,R0
+	LDR R7,=120000
+
+buc1:	CMP R7,#0
+	BEQ FIN_buc1
+	SUB R7,R7,#1
+	B buc1
+
+FIN_buc1:	BL Timer_Act
+
+		MOV R0,R5
+
+@Tanto r5 como r0 tiene que devolver lo mismo, los segundos
+@micro segundos en hexadecimal
+
+	SWI 0x11

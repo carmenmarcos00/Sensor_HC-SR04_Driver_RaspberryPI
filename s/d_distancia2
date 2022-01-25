@@ -1,0 +1,94 @@
+.extern prog_gpio
+.extern valor_gpio
+.extern leeValor_gpio
+.extern Ini_Timer
+.extern Timer_Act
+
+.extern progEv_gpio
+.extern leeEv_gpio
+.extern clearEv_gpio
+
+.data
+
+.text
+
+.globl Mide_dist
+.globl Ini_dist
+
+
+Ini_dist:
+
+	STMDB SP!,{R4-R7,LR}
+	MOV R0,#2
+	MOV R1,#1
+	BL prog_gpio		@programo el pin de trig
+
+	MOV R0,#3
+	MOV R1,#0
+	BL prog_gpio		@programo el pin del echo
+	LDMIA SP!,{R4-R7,PC}
+
+
+Mide_dist:
+
+	STMDB SP!,{R4-R7,LR}
+
+	MOV R0,#2
+	MOV R1,#1
+	BL valor_gpio		@salida a 1 del trig
+
+				@Nunca pongo echo a 1, miro si esta a 1 y mido
+				@703 instruc----1 micro
+				@x   instruc----16 micro
+
+	LDR R0,=3		@Veces que realizo el bucle
+	                        @en depuracion 1, 6000 ejecucion
+BUCLE:	subs R0,R0,#1		@Decremento el bucle
+	bne BUCLE		@condición de salida
+
+	MOV R0,#2
+	MOV R1,#0
+	BL valor_gpio		@salida a 0 del trig
+
+
+	LDR R4,=100000		@condicion de salida del bucle
+FLANCO:	MOV R0,#3		@valor del pin echo
+	BL leeValor_gpio	@consulto el valor de dicho pin
+	CMP R0,#1		@comparo el valor del pin con 1
+	BEQ TIMER		@si es 1 empiezo a contar
+	SUB R4,R4,#1		@si no le resto a la condición de salida
+	CMP R4,#0		@comparo la condicion de salida
+	BEQ FIN			@si la condicion de salida es 0 acabo
+	B FLANCO		@si no se cumple vuelvo a leer valor
+
+
+TIMER:
+        MOV R0,#3               @pin del echo
+        MOV R1,#1               @flanco descendente
+        BL progEv_gpio          @programo para que detecte flancos
+        BL Ini_timer		@inicializo el timer
+	BL Timer_Act		@me devuelve el valor del timer
+	MOV R5,R0		@Guardo el valor del timer
+
+@A partir de aqui estan los cambios para detectar con flancos
+
+FLAN2:	MOV R0,#3		@pin de echo
+	BL leeEv_gpio           @Consulto el valor de echo
+	CMP R0,#1		@comparo el valor con 1
+
+	Bne  FLAN2
+
+
+CALCULA:BL Timer_Act		@vuelvo a ver el valor del timer
+
+	SUB R5,R0,R5		@calculo la diferencia de tiempo
+	LDR R6,=11246
+	MUL R5,R6,R5
+	LSR R5,R5,#16		@distancia en hexa
+
+        MOV R3,#3
+        BL clearEv_gpio         @limpio el valor de GPEDS
+
+	MOV R0,R5
+
+FIN:	LDMIA SP!,{R4-R7,PC}
